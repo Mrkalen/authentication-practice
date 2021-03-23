@@ -1,7 +1,7 @@
 const express = require('express');
 const exphbs = require('express-handlebars');
 const cookieParser = require('cookie-parser');
-const bodyPaser = require('body-parser');
+const bodyParser = require('body-parser');
 
 
 const app = express();
@@ -21,4 +21,10 @@ app.set('view engine', 'hbs');
 
 // Our requeswts handlers will be implemented here...
 
-app.listen(3000);
+app.get('/', (req, res) => {
+  res.render('home');
+});
+
+app.listen(3000, () => {
+  console.log('express listening on 3000')
+});
