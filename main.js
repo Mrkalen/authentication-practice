@@ -13,6 +13,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // To parse cookies from the HTTP Request
 app.use(cookieParser());
 
+app.use((req, res, next) => {
+  // Get auth token from the cookies
+  const authToken = req.cookies['AuthToken'];
+
+  // Inject the user to the request
+  req.user = authTokens[authToken];
+
+  next();
+});
+
 // Lets us use hbs as the extension for handlebars files
 app.engine('hbs', exphbs({
   extname: '.hbs'
@@ -83,6 +93,61 @@ app.post('/register', (req, res) => {
   } else {
     res.render('register', {
       message: 'Password does not match.',
+      messageClass: 'alert-danger'
+    });
+  }
+});
+
+// login route
+
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+// Token generator
+
+const generateAuthToken = () => {
+  return crypto.randomBytes(20).toString('hex');
+}
+
+// This will hold the users and authToken related to users
+
+const authTokens = {};
+
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  const hashedPassword = getHashedPassword(password);
+
+  const user = users.find(u => {
+    return u.email === email && hashedPassword === u.password
+  });
+
+  if (user) {
+    const authToken = generateAuthToken();
+
+    // Store authentication token
+    authTokens[authToken] = user;
+
+    // Setting the auth token in cookies
+    res.cookie('AuthToken', authToken);
+
+    // Redirect user to the protected page
+    res.redirect('/protected');
+  } else {
+    res.render('login', {
+      message: 'Invalid username or password',
+      messageClass: 'alert-danger'
+    });
+  }
+});
+
+// Get route for protected page
+app.get('/protected', (req, res) => {
+  if (req.user) {
+    res.render('protected');
+  } else {
+    res.render('login', {
+      message: 'Please login to continue',
       messageClass: 'alert-danger'
     });
   }
